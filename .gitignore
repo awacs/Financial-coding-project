@@ -1,7 +1,9 @@
 # Personal financial data — never commit
 *.csv
-Input/
-Output/
+Input/*
+!Input/.gitkeep
+Output/*
+!Output/.gitkeep
 
 # Python
 __pycache__/
