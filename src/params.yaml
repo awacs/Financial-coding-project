@@ -1,0 +1,174 @@
+# System prompt sent to the LLM for every classification run
+system_prompt: |
+  You are a careful bank-transaction classifier.
+  You will receive a list of transactions. Each transaction is a single string,
+  possibly containing fields like TYPE, DATE, DESCRIPTION, AMOUNT, METHOD, BALANCE.
+
+  Task:
+  - Assign EXACTLY ONE category to each transaction from the provided category list.
+  - Prefer the most specific applicable category.
+  - If nothing fits, use "misc".
+  - Return STRICT JSON: a list of objects, one per input, in order.
+  - Each object must be:
+    {"category": "<one_of_categories>", "confidence": <0.0-1.0>, "rationale": "<short reason>"}
+
+  Rules:
+  - Payments to credit cards = "credit_card_payment" (even if ACH).
+  - Payroll/salary = "wage".
+  - University tuition/online payments to UCLA registrar = "tuition".
+  - HOA fees/dues = "hoa_dues".
+  - Utility providers (gas, electric, water) = "utilities".
+  - Small recurring digital services (e.g., GitHub, Netflix) = "subscriptions".
+  - Pure internal moves between your own accounts = "transfer_internal".
+  - Taxes to government treasuries = "taxes".
+  - APA TREAS or treasury interest payments = "investment".
+  - Employer or other reimbursements = "reimbursement".
+  - Investment account moves = "investment".
+  - Travel, hotels, flights = "travel".
+  - Large (>1000) wire transfers = "wire".
+  - Annual property tax payments = "property_tax".
+  - Negative amounts indicate debits; positive credits do not change category logic.
+  - Ignore a running BALANCE field if present; it is not the amount to classify.
+  Return only the JSON list — no commentary, no markdown fences.
+
+# Model and batching
+model: "claude-haiku-4-5-20251001"   # Anthropic Haiku — fast and cheap
+batch_size: 40                        # rows to classify per API call
+max_retries: 4                        # API retry attempts on transient errors
+temperature: 0.0                      # deterministic classification
+
+# Required: your categories (order matters for tie-breaks)
+categories:
+  - wage
+  - reimbursement
+  - tuition
+  - mortgage
+  - online_shopping
+  - rent
+  - utilities
+  - subscriptions
+  - groceries
+  - gaming
+  - dining
+  - transportation
+  - childcare
+  - wire
+  - insurance
+  - medical
+  - taxes
+  - property_tax
+  - hoa_dues
+  - investment
+  - travel
+  - credit_card_payment
+  - transfer_internal
+  - fees
+  - misc
+
+# Optional: light keyword hints (cheap, local heuristics run before LLM; LLM still has final say)
+# Format: category: [list of case-insensitive substrings]
+keyword_hints:
+  groceries:
+    - "GROCERY"
+    - "UCLA_STORE"
+    - "SUPERMARKET"
+    - "WHOLE FOODS"
+    - "SAFEWAY"
+    - "TRADER JOE'S"
+  online_shopping:
+    - "AMAZON"
+    - "EBAY"
+    - "WALMART.COM"
+    - "BEST BUY"
+    - "TARGET"
+  gaming:
+    - "Genesis Crys"
+    - "STEAM"
+    - "EPIC GAMES"
+    - "XBOX LIVE"
+    - "PLAYSTATION"
+    - "NINTENDO"
+    - "CONGCOGNOSPHERE"
+  wage:
+    - "PAYROLL"
+    - "PAY STUB"
+    - "WAGES"
+    - "SALARY"
+    - "UNIVERSITY OF CA"
+    - "AMAZON.COM SVCS  PAYROLL"
+  reimbursement:
+    - "REIMB"
+    - "EXPENSE REPORT"
+    - "EXP REIMBURSEMENT"
+  tuition:
+    - "UCLA ONLINEPYMT"
+    - "TUITION"
+    - "ENROLL"
+    - "REGISTRAR"
+  mortage:
+    - "MORTGAGE"
+    - "HOME LOAN"
+    - "COOPER"
+  subscriptions:
+    - "GITHUB"
+    - "NETFLIX"
+    - "SPOTIFY"
+    - "WRITEFULL"
+    - "TEXTNOW"
+  utilities:
+    - "SOCALGAS"
+    - "GAS"
+    - "ELECTRIC"
+    - "WATER"
+    - "UTIL"
+  hoa_dues:
+    - "HO ASSN"
+    - "HOA"
+  credit_card_payment:
+    - "CREDIT CRD AUTOPAY"
+    - "AMERICAN EXPRESS ACH PMT"
+    - "DISCOVER E-PAYMENT"
+    - "AMEX"
+  taxes:
+    - "IRS"
+    - "TAX PAYMENT"
+    - "STATE TAX"
+  property_tax:
+    - "PROPERTY TAX"
+    - "PROP TAX"
+    - "COUNTY TAX"
+  investment:
+    - "APA TREAS"
+    - "TREAS 310"
+    - "TREASURY INT"
+    - "FIDELITY"
+    - "VANGUARD"
+    - "SCHWAB"
+    - "BROKERAGE"
+    - "401K"
+    - "INVEST"
+  travel:
+    - "AIRLINE"
+    - "HOTEL"
+    - "AIRBNB"
+    - "EXPEDIA"
+    - "UNITED"
+    - "DELTA"
+    - "MARRIOTT"
+    - "HILTON"
+
+# Column names to look for — normalized to lowercase by the script.
+# Covers both Chase formats:
+#   Chase1600:       Details, Posting Date, Description, Amount, Type, Balance
+#   Chase4488/5650:  Transaction Date, Post Date, Description, Category, Type, Amount, Memo
+possible_columns:
+  - details
+  - posting date
+  - transaction date
+  - post date
+  - description
+  - amount
+  - type
+  - balance
+  - category
+  - memo

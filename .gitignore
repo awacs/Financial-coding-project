@@ -1,0 +1,18 @@
+# Personal financial data — never commit
+*.csv
+Input/
+Output/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Backup/temp files
+*.py.txt
+*.yaml.txt
+
+# Windows
+desktop.ini
+Thumbs.db
