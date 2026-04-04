@@ -63,6 +63,12 @@ def detect_institution(description: str) -> str:
 def load(path: str, role: str) -> pd.DataFrame:
     df = pd.read_csv(path)
     df.columns = [c.strip().lower() for c in df.columns]
+
+    # Normalize date columns so bank ("posting date") and card ("post date")
+    # merge into a single column in the reconciled report.
+    if "post date" in df.columns and "posting date" not in df.columns:
+        df = df.rename(columns={"post date": "posting date"})
+
     df["account"] = os.path.splitext(os.path.basename(path))[0]
     df["role"] = role
     df["match_id"] = ""
@@ -249,7 +255,8 @@ def run_pipeline(bank_raw: str, cards_raw: List[str], params_path: str,
 
     # Step 2: Reconcile
     print("\n── Step 2: Reconciling ─────────────────────────────────────────────")
-    reconcile_out = os.path.join(output_dir, "reconciled_report.csv")
+    bank_stem = os.path.splitext(os.path.basename(bank_raw))[0]
+    reconcile_out = os.path.join(output_dir, f"{bank_stem}.reconciled.csv")
     has_warnings = _reconcile(bank_classified, cards_classified,
                               date_tol, amount_tol, reconcile_out)
 
@@ -282,7 +289,7 @@ if __name__ == "__main__":
     ap.add_argument("--flag-threshold", type=float, default=500,
                     help="Flag debits larger than this in the analysis (default: 500)")
     ap.add_argument("--summary-file", default=None,
-                    help="Output filename for the summary report (default: summary.csv). "
+                    help="Output filename for the summary report (default: summary.txt). "
                          "Relative paths are joined with --output-dir; absolute paths are used as-is.")
     args = ap.parse_args()
 

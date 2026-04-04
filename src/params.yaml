@@ -22,6 +22,7 @@ system_prompt: |
   - Pure internal moves between your own accounts = "transfer_internal".
   - Taxes to government treasuries = "taxes".
   - APA TREAS or treasury interest payments = "investment".
+  - TREASURY DIRECT purchases = "investment".
   - Employer or other reimbursements = "reimbursement".
   - Investment account moves = "investment".
   - Travel, hotels, flights = "travel".

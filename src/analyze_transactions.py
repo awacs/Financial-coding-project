@@ -3,7 +3,7 @@ analyze_transactions.py
 
 Reads one or more .classified.csv files produced by classify_transactions.py,
 then prints an income-vs-spending summary to the console and writes
-Output/summary.csv.
+Output/summary.txt.
 
 Usage:
     python analyze_transactions.py Output/*.classified.csv
@@ -136,7 +136,7 @@ def analyze(files: list, flag_threshold: float, output_dir: str = "Output",
     # -----------------------------------------------------------------------
     os.makedirs(output_dir, exist_ok=True)
     if summary_file is None:
-        out_path = os.path.join(output_dir, "summary.csv")
+        out_path = os.path.join(output_dir, "summary.txt")
     elif os.path.isabs(summary_file):
         out_path = summary_file
     else:
